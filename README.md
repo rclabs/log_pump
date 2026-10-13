@@ -84,7 +84,7 @@ static log_pump::FreeRtosQueue<Item, 128> queue;
 static log_pump::Recorder<my_observations::max_payload_size, decltype(queue)> recorder(queue);
 
 // Producer task: populate a generated observation, then:
-// bool accepted = recorder.tryRecord(observation, capture_time_us);
+// bool accepted = recorder.record(observation, capture_time_us);
 
 // Consumer task: blocking wait is permitted here, not on the producer:
 // Item item;
@@ -95,7 +95,7 @@ The application starts/stops tasks, selects timestamps, applies capture-rate
 policies, and implements sinks. The queue and recorder must outlive all users.
 Place substantial queue storage in static/object storage, not on a small task
 stack. No public producer method is ISR-safe. Observations must not change while
-`tryRecord` encodes them. One recorder must use one dictionary; mixing schemas
+`record` encodes them. One recorder must use one dictionary; mixing schemas
 with overlapping type IDs is an application error.
 
 Producer calls perform bounded encoding and a zero-timeout queue send, with no
@@ -109,7 +109,7 @@ pointers are retained. Approximate item storage is `Capacity * sizeof(Item)` plu
 queue metadata. Large optional diagnostics should not dictate observation slot
 size; separate queues/categories can be added later.
 
-Full queues reject the incoming record. `tryRecord` returns false and increments
+Recording is best effort. Full queues reject the incoming record. `record` returns false and increments
 `dropped`; `attempted` and `accepted` are also available. Counters/sequence wrap
 modulo 2^32. A sequence is assigned to every attempt, so drops produce gaps.
 Concurrent producers can enqueue in a different order from sequence allocation

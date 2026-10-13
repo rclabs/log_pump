@@ -24,8 +24,9 @@ public:
     Recorder(const Recorder&) = delete;
     Recorder& operator=(const Recorder&) = delete;
 
+    // Best effort: never waits for capacity; false means the queue rejected it.
     template<class Observation>
-    bool tryRecord(const Observation& value, std::uint64_t timestamp_us) {
+    bool record(const Observation& value, std::uint64_t timestamp_us) {
         static_assert(Observation::encoded_size <= MaxPayload, "Observation exceeds queue slot payload");
         RecordType record{};
         record.timestamp_us = timestamp_us;
