@@ -22,6 +22,8 @@ int main() {
     first.timestamp_us = 100;
     assert(sink.offer(first, 100));
     assert(!sink.take(out, index, 999999, {}, 16));
+    sink.feedback(999999, false);
+    assert(sink.adaptationLevel() == 0); // Requested rate wait is not congestion.
     assert(sink.take(out, index, 1000001, {}, 16));
     assert(!sink.take(out, index, 1000001, {}, 16)); // No repeated value.
     assert(sink.offer(first, 1000002));

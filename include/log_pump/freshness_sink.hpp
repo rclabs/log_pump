@@ -93,10 +93,25 @@ public:
                 result = std::max(result, now_us - slots_[i].pending_since_us);
         return result;
     }
+    std::uint64_t oldestEligibleAge(std::uint64_t now_us) const {
+        std::uint64_t result = 0;
+        for (std::size_t i = 0; i < count_; ++i) {
+            const auto& slot = slots_[i];
+            if (!slot.pending) continue;
+            auto eligible_since = slot.pending_since_us;
+            if (slot.sent_once) {
+                const auto interval = effectiveInterval(i);
+                if (now_us < slot.last_selected_us || now_us - slot.last_selected_us < interval) continue;
+                eligible_since = std::max(eligible_since, now_us - (now_us - slot.last_selected_us - interval));
+            }
+            if (now_us >= eligible_since) result = std::max(result, now_us - eligible_since);
+        }
+        return result;
+    }
     void feedback(std::uint64_t now_us, bool transport_busy) {
         if (now_us < feedback_us_ || now_us - feedback_us_ < 100000) return;
         feedback_us_ = now_us;
-        if (transport_busy || oldestPendingAge(now_us) >= 100000) {
+        if (transport_busy || oldestEligibleAge(now_us) >= 100000) {
             level_ = std::min(3U, level_ + 1);
             last_pressure_us_ = now_us;
         } else if (level_ != 0 && now_us >= last_pressure_us_ && now_us - last_pressure_us_ >= 2000000) {

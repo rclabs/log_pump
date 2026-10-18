@@ -7,7 +7,7 @@ flight-specific definitions live here.
 
 **Initial scope:** observations only, fixed-size numeric payloads, drop-new on
 capacity exhaustion, explicit binary encoding, checksummed blocks, YAML code
-generation, and a matching host decoder. Events/priorities, diagnostics queues,
+generation, and a matching host decoder. Event delivery guarantees, diagnostics queues,
 transport protocols and visualizers remain application concerns. A bounded
 freshness-first consumer policy now provides rate/priority scheduling, replacement,
 age expiry and conservative rate adaptation independently of recorder ingress.
@@ -24,8 +24,8 @@ age expiry and conservative rate adaptation independently of recorder ingress.
   provider and nonblocking callback fan-out. Caller serializes access; no I/O or
   domain knowledge. Rates are ceilings, not delivery guarantees. Tokens have a
   256-byte burst bound, so one payload plus its application envelope must fit it.
-  Pending age (not latest sample age) drives adaptation; replacing a sample cannot
-  hide a stuck sink. Priority never authorizes exceeding requested rate.
+  Eligible pending wait (not latest sample age) drives adaptation; replacing a
+  sample cannot hide a stuck sink, and intentional requested-rate waits are excluded. Priority never authorizes exceeding requested rate.
 - `tools/generate.py`: validates a domain-owned YAML dictionary and generates
   `observations.hpp` plus normalized `schema.json`.
 - `tools/decode.py`: matching dictionary + stream -> JSON Lines.
