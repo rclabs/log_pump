@@ -8,7 +8,9 @@ flight-specific definitions live here.
 **Initial scope:** observations only, fixed-size numeric payloads, drop-new on
 capacity exhaustion, explicit binary encoding, checksummed blocks, YAML code
 generation, and a matching host decoder. Events/priorities, diagnostics queues,
-rate adaptation, transport protocols, and visualizers are not implemented yet.
+transport protocols and visualizers remain application concerns. A bounded
+freshness-first consumer policy now provides rate/priority scheduling, replacement,
+age expiry and conservative rate adaptation independently of recorder ingress.
 
 ## Project boundaries
 
@@ -17,6 +19,13 @@ rate adaptation, transport protocols, and visualizers are not implemented yet.
 - `include/log_pump/recorder.hpp`: generic typed producer API and counters.
 - `include/log_pump/freertos_queue.hpp`: statically allocated FreeRTOS queue policy.
 - `include/log_pump/host_queue.hpp`: bounded mutex-based host/demo queue policy.
+- `include/log_pump/freshness_sink.hpp`: fixed latest-value slots, weighted
+  high/medium/low scheduling, byte-budget pacing, backlog feedback, a mock link
+  provider and nonblocking callback fan-out. Caller serializes access; no I/O or
+  domain knowledge. Rates are ceilings, not delivery guarantees. Tokens have a
+  256-byte burst bound, so one payload plus its application envelope must fit it.
+  Pending age (not latest sample age) drives adaptation; replacing a sample cannot
+  hide a stuck sink. Priority never authorizes exceeding requested rate.
 - `tools/generate.py`: validates a domain-owned YAML dictionary and generates
   `observations.hpp` plus normalized `schema.json`.
 - `tools/decode.py`: matching dictionary + stream -> JSON Lines.
