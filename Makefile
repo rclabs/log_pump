@@ -9,8 +9,13 @@ build/recorder_tests: tests/recorder_tests.cpp $(HEADERS)
 	mkdir -p build
 	$(CXX) -Iinclude $(CXXFLAGS) $< $(LDFLAGS) -pthread -o $@
 
-test: build/recorder_tests
+build/freshness_tests: tests/freshness_tests.cpp $(HEADERS)
+	mkdir -p build
+	$(CXX) -Iinclude $(CXXFLAGS) $< $(LDFLAGS) -pthread -o $@
+
+test: build/recorder_tests build/freshness_tests
 	./build/recorder_tests
+	./build/freshness_tests
 	$(PYTHON) -m unittest discover -s tests -p 'test_*.py' -v
 
 clean:
