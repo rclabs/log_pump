@@ -64,5 +64,23 @@ int main() {
         if (sink.take(out, index, tick * 1000ULL, {100000, true}, 16)) ++counts[index];
     }
     assert(counts[2] > counts[1] && counts[1] > counts[0] && counts[0] > 0);
+    // A cheap low-priority packet cannot spend every token before a larger
+    // high-priority packet fits. Both retain bounded service under a tiny budget.
+    log_pump::FreshnessSink<64, 2> mixed;
+    log_pump::Subscription mixed_subscriptions[] = {{1, 0, 200000, log_pump::Priority::High},
+                                                   {2, 0, 200000, log_pump::Priority::Low}};
+    assert(mixed.configure(mixed_subscriptions, 2, 0));
+    decltype(mixed)::Item mixed_item, mixed_out;
+    unsigned mixed_counts[2] = {};
+    for (unsigned tick = 1; tick <= 1000; ++tick) {
+        mixed_item.timestamp_us = tick * 10000ULL;
+        for (unsigned id = 1; id <= 2; ++id) {
+            mixed_item.type = static_cast<std::uint16_t>(id);
+            mixed_item.payload_size = id == 1 ? 64 : 1;
+            assert(mixed.offer(mixed_item, mixed_item.timestamp_us));
+        }
+        if (mixed.take(mixed_out, index, mixed_item.timestamp_us, {256, true}, 64)) ++mixed_counts[index];
+    }
+    assert(mixed_counts[0] > 2 * mixed_counts[1] && mixed_counts[1] > 0);
     std::puts("Freshness ownership, rate, age, fairness, adaptation and independent fanout passed");
 }

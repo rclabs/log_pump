@@ -25,7 +25,10 @@ age expiry and conservative rate adaptation independently of recorder ingress.
   domain knowledge. Rates are ceilings, not delivery guarantees. Tokens have a
   256-byte burst bound, so one payload plus its application envelope must fit it.
   Eligible pending wait (not latest sample age) drives adaptation; replacing a
-  sample cannot hide a stuck sink, and intentional requested-rate waits are excluded. Priority never authorizes exceeding requested rate.
+  sample cannot hide a stuck sink, and intentional requested-rate waits are
+  excluded. Priority never authorizes exceeding requested rate. The next eligible
+  credit reserves its token budget so cheap packets cannot permanently starve
+  larger ones; budget waits can briefly defer other streams.
 - `tools/generate.py`: validates a domain-owned YAML dictionary and generates
   `observations.hpp` plus normalized `schema.json`.
 - `tools/decode.py`: matching dictionary + stream -> JSON Lines.

@@ -151,7 +151,12 @@ public:
                 if (!slot.pending || slot.credits == 0 ||
                     (slot.sent_once && now_us >= slot.last_selected_us && now_us - slot.last_selected_us < interval)) continue;
                 const auto bytes = envelope_bytes + slot.latest.payload_size;
-                if (tokens_ < static_cast<double>(bytes)) continue;
+                // Reserve the next eligible credit's budget. Letting cheaper
+                // later streams spend it can starve larger packets forever.
+                // Oversized packets violate the documented burst bound; skip
+                // those rather than wedging otherwise serviceable streams.
+                if (bytes > 256) continue;
+                if (tokens_ < static_cast<double>(bytes)) return false;
                 tokens_ -= static_cast<double>(bytes);
                 result = slot.latest;
                 stream_index = i;
